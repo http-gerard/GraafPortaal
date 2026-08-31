@@ -18,3 +18,4 @@ View your app in AI Studio: https://ai.studio/apps/67b49e94-37d3-4b30-866f-38931
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+# GraafPortaal
