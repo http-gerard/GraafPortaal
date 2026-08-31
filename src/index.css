@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", sans-serif;
+  
+  --color-primary: #7b68ee;
+  --color-primary-hover: #6a5ad6;
+  --color-primary-container: #ede9fe;
+  --color-on-primary-container: #5b21b6;
+  
+  --color-secondary: #64748b;
+  --color-secondary-container: #f1f5f9;
+  --color-on-secondary-container: #334155;
+  
+  --color-surface: #f8f9fa;
+  --color-surface-container: #f1f5f9;
+  --color-surface-container-low: #f8fafc;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #e2e8f0;
+  --color-surface-container-highest: #cbd5e1;
+  
+  --color-on-surface: #1e293b;
+  --color-on-surface-variant: #475569;
+  
+  --color-outline: #cbd5e1;
+  --color-outline-variant: #e2e8f0;
+  
+  --color-error: #ef4444;
+  --color-error-container: #fee2e2;
+  
+  --color-tertiary: #f59e0b;
+  --color-tertiary-container: #fef3c7;
+  
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-body antialiased;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  vertical-align: middle;
+}
+

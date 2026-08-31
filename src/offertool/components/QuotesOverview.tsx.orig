@@ -1,0 +1,295 @@
+import React, { useState } from 'react';
+import { QuoteData } from '../types';
+import { 
+  Plus, 
+  Search, 
+  ArrowRight, 
+  Copy, 
+  Trash2, 
+  Building2, 
+  Calendar,
+  FileText,
+  Layers,
+  Sparkles,
+  Receipt,
+  Activity,
+  CheckCircle2,
+  PenTool
+} from 'lucide-react';
+
+interface QuotesOverviewProps {
+  quotes: QuoteData[];
+  currentQuoteId: string;
+  onSelectQuote: (id: string, targetTab?: 'builder' | 'preview') => void;
+  onCreateQuote: () => void;
+  onOpenAiGenerator: () => void;
+  onDuplicateQuote: (id: string) => void;
+  onDeleteQuote: (id: string) => void;
+}
+
+export const QuotesOverview: React.FC<QuotesOverviewProps> = ({
+  quotes,
+  currentQuoteId,
+  onSelectQuote,
+  onCreateQuote,
+  onOpenAiGenerator,
+  onDuplicateQuote,
+  onDeleteQuote
+}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  // Helper to calculate totals
+  const getQuoteTotals = (q: QuoteData) => {
+    const items = q?.items || [];
+    const selected = items.filter(i => i.selected);
+    const oneOffSubtotal = selected
+      .filter(i => i.billingType === 'one_off')
+      .reduce((acc, curr) => acc + ((Number(curr.price) || 0) * (Number(curr.quantity) || 1)), 0);
+    
+    const monthlySubtotal = selected
+      .filter(i => i.billingType === 'monthly')
+      .reduce((acc, curr) => acc + ((Number(curr.price) || 0) * (Number(curr.quantity) || 1)), 0);
+
+    const discountVal = Number(q?.overallDiscountValue) || 0;
+    const discount = q?.overallDiscountType === 'percentage'
+      ? (oneOffSubtotal * discountVal) / 100
+      : discountVal;
+
+    const finalOneOff = Math.max(0, oneOffSubtotal - discount);
+    return { finalOneOff, monthlySubtotal };
+  };
+
+  const filteredQuotes = quotes.filter(q => {
+    const term = (searchQuery || '').toLowerCase();
+    return (
+      (q.projectName || '').toLowerCase().includes(term) ||
+      (q.client?.companyName || '').toLowerCase().includes(term) ||
+      (q.client?.contactPerson || '').toLowerCase().includes(term) ||
+      (q.quoteNumber || '').toLowerCase().includes(term)
+    );
+  });
+
+  return (
+    <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-5">
+      
+      {/* Top Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
+        <div>
+          <h1 className="text-xl font-semibold text-[#1e293b]">
+            Mijn Offertes
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Overzicht van al uw offertes met live engagement tracking, facturatiekoppeling en AI generatie.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* AI Generator Button */}
+          <button
+            onClick={onOpenAiGenerator}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#7b68ee]/10 hover:bg-[#7b68ee]/20 text-[#7b68ee] text-xs font-semibold rounded-md shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 fill-current" />
+            <span>AI Offerte via Notities</span>
+          </button>
+
+          {/* New Blank Quote Button */}
+          <button
+            onClick={onCreateQuote}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#7b68ee] hover:bg-[#6a5ad6] text-white text-xs font-semibold rounded-md shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-white" />
+            <span>Nieuwe Offerte</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-xs">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Zoek op klantnaam, project of offertenummer..."
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-md text-xs text-[#1e293b] focus:outline-none focus:border-[#7b68ee] focus:ring-1 focus:ring-[#7b68ee]/30 focus:bg-white placeholder:text-slate-500"
+          />
+        </div>
+      </div>
+
+      {/* List of Quotes */}
+      <div className="space-y-3">
+        {filteredQuotes.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-lg p-12 text-center shadow-xs">
+            <Layers className="w-10 h-10 text-[#D6D9DE] mx-auto mb-3" />
+            <h3 className="text-sm font-semibold text-[#1e293b]">Geen offertes gevonden</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Er zijn geen offertes die overeenkomen met uw zoekopdracht.
+            </p>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="mt-3 px-3.5 py-1.5 text-xs font-bold text-white bg-[#7b68ee] rounded-md hover:bg-[#6a5ad6] transition-colors"
+              >
+                Wis zoekopdracht
+              </button>
+            )}
+          </div>
+        ) : (
+          filteredQuotes.map((q) => {
+            const { finalOneOff, monthlySubtotal } = getQuoteTotals(q);
+            const isCurrentActive = q.id === currentQuoteId;
+            const selectedServicesCount = q.items.filter(i => i.selected).length;
+            const isSigned = !!q.digitalSignature || q.status === 'akkoord';
+            const invoiceCount = q.invoices?.length || 0;
+
+            return (
+              <div
+                key={q.id}
+                className={`bg-white border transition-all duration-150 rounded-lg p-4 shadow-xs hover:border-slate-900/40 ${
+                  isCurrentActive ? 'border-slate-900 ring-2 ring-[#7b68ee]' : 'border-slate-200'
+                }`}
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  
+                  {/* Left: Project & Client Details */}
+                  <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                    <div className="w-10 h-10 rounded-md bg-\[#7b68ee\]/10 flex items-center justify-center font-semibold text-[#7b68ee] text-sm shrink-0">
+                      {q.client.companyName ? q.client.companyName.substring(0, 2).toUpperCase() : 'SG'}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={() => onSelectQuote(q.id, 'builder')}
+                          className="font-semibold text-[#1e293b] text-sm hover:text-\[#7b68ee\] hover:underline text-left transition-colors cursor-pointer"
+                        >
+                          {q.projectName || 'Naamloos project'}
+                        </button>
+                        <span className="text-[11px] font-mono font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                          {q.quoteNumber}
+                        </span>
+                        
+                        {/* Status Badges */}
+                        {isSigned && (
+                          <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            Ondertekend
+                          </span>
+                        )}
+
+                        {invoiceCount > 0 && (
+                          <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
+                            {invoiceCount}x Factuur
+                          </span>
+                        )}
+
+                        {isCurrentActive && (
+                          <span className="text-[10px] font-semibold bg-[#7b68ee] text-white px-2 py-0.5 rounded-full">
+                            Actief
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
+                        <span className="font-bold text-[#1e293b] flex items-center gap-1">
+                          <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                          {q.client.companyName || 'Geen klant ingevuld'}
+                        </span>
+                        {q.client.contactPerson && (
+                          <>
+                            <span>•</span>
+                            <span>{q.client.contactPerson}</span>
+                          </>
+                        )}
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                          {q.createdAt}
+                        </span>
+                        <span>•</span>
+                        <span>{selectedServicesCount} diensten</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Price & Quick Action Buttons */}
+                  <div className="flex items-center justify-between md:justify-end gap-4 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#F0F1F3]">
+                    
+                    {/* Amount */}
+                    <div className="text-left md:text-right">
+                      <div className="text-sm font-semibold text-[#1e293b] font-mono">
+                        € {(Number(finalOneOff) || 0).toLocaleString('nl-NL', { minimumFractionDigits: 0 })}
+                      </div>
+                      {monthlySubtotal > 0 && (
+                        <div className="text-[11px] font-bold text-white bg-[#7b68ee]/30 px-1.5 py-0.5 rounded">
+                          + € {(Number(monthlySubtotal) || 0).toLocaleString('nl-NL')}/mnd
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1.5">
+
+                      <button
+                        onClick={() => onSelectQuote(q.id, 'builder')}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#7b68ee]/10 hover:bg-[#7b68ee]/20 text-[#7b68ee] text-xs font-semibold rounded-md transition-all shadow-xs cursor-pointer"
+                        title="Offerte openen en bewerken"
+                      >
+                        <span>Aanpassen</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => onSelectQuote(q.id, 'preview')}
+                        className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer"
+                        title="Bekijk PDF Voorbeeld"
+                      >
+                        <FileText className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => onDuplicateQuote(q.id)}
+                        className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200 cursor-pointer"
+                        title="Dupliceer deze offerte"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+
+                      {quotes.length > 1 && (
+                        <button
+                          onClick={() => {
+                            if (confirmDeleteId === q.id) {
+                              onDeleteQuote(q.id);
+                              setConfirmDeleteId(null);
+                            } else {
+                              setConfirmDeleteId(q.id);
+                              setTimeout(() => setConfirmDeleteId(null), 3000);
+                            }
+                          }}
+                          className={`p-1.5 rounded-lg transition-colors border cursor-pointer ${
+                            confirmDeleteId === q.id 
+                              ? 'bg-rose-500 text-white border-rose-600' 
+                              : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50 border-slate-200'
+                          }`}
+                          title={confirmDeleteId === q.id ? 'Klik nogmaals om te bevestigen' : 'Verwijder offerte'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+    </div>
+  );
+};

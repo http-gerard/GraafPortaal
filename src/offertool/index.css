@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-primary: #C1ED00;
+    --brand-primary-hover: #b2dc00;
+    --brand-dark: #181A20;
+    --brand-dark-soft: #23272F;
+    --bg-main: #F7F8F9;
+    --bg-card: #FFFFFF;
+    --bg-secondary: #F0F1F3;
+    --text-main: #181A20;
+    --text-muted: #7C828D;
+    --border-color: #E8E9EB;
+    --border-dark: #D6D9DE;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F0F1F3;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D6D9DE;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7C828D;
+}
+
+/* Print Rules for perfect physical and browser-to-PDF output */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #292D34 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .page-break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .page-break-after {
+    page-break-after: always;
+  }
+}
