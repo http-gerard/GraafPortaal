@@ -256,14 +256,17 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                                 </span>
                               )}
                             </td>
-                            <td className="py-3 px-3 text-slate-500 align-top">
-                              <p className="text-[#1e293b]">{item.shortDescription}</p>
+                            <td className="py-3 px-3 text-slate-600 align-top">
+                              {item.shortDescription && (
+                                <p className="text-[#1e293b] font-medium leading-relaxed mb-1.5">{item.shortDescription}</p>
+                              )}
                               {item.detailedScope && item.detailedScope.length > 0 && (
-                                <div className="mt-1 flex flex-wrap gap-1">
-                                  {item.detailedScope.slice(0, 2).map((sc, si) => (
-                                    <span key={si} className="text-[10px] text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
-                                      ✓ {sc}
-                                    </span>
+                                <div className="space-y-1">
+                                  {item.detailedScope.filter(Boolean).map((sc, si) => (
+                                    <div key={si} className="flex items-start gap-1.5 text-[11px] text-slate-700 leading-snug">
+                                      <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
+                                      <span>{sc}</span>
+                                    </div>
                                   ))}
                                 </div>
                               )}
@@ -392,7 +395,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                     style={{ backgroundColor: cat.color || '#7b68ee' }} 
                   />
                   <h4 className="text-sm font-semibold text-[#1e293b]">
-                    {cleanCategoryName(cat.name)} <span className="text-xs font-semibold text-slate-500">({cat.badge})</span>
+                    {cleanCategoryName(cat.name)}
                   </h4>
                 </div>
 

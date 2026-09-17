@@ -14,7 +14,9 @@ import {
   PenTool,
   Receipt,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  X,
+  ListPlus
 } from 'lucide-react';
 
 interface BuilderViewProps {
@@ -338,11 +340,18 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
                               {item.selected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                             </button>
 
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className={`text-xs font-semibold truncate ${item.selected ? 'text-[#1e293b]' : 'text-slate-500'}`}>
-                                  {item.name}
-                                </span>
+                                <input
+                                  type="text"
+                                  value={item.name}
+                                  onChange={(e) => handleUpdateItem(item.id, { name: e.target.value })}
+                                  placeholder="Dienstnaam..."
+                                  title="Klik om dienstnaam aan te passen"
+                                  className={`text-xs font-semibold bg-transparent hover:bg-slate-100 focus:bg-white border border-transparent hover:border-slate-200 focus:border-[#7b68ee] focus:ring-1 focus:ring-[#7b68ee]/30 rounded px-1.5 py-0.5 transition-all outline-none flex-1 min-w-0 ${
+                                    item.selected ? 'text-[#1e293b]' : 'text-slate-500'
+                                  }`}
+                                />
                                 {item.billingType === 'monthly' && (
                                   <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
                                     Maandelijks
@@ -354,9 +363,65 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[11px] text-slate-500 truncate">
-                                {item.shortDescription}
-                              </p>
+
+                              <div className="relative">
+                                <textarea
+                                  rows={1}
+                                  value={item.shortDescription || ''}
+                                  placeholder="Beschrijving van deze dienst aanpassen..."
+                                  title="Klik om beschrijving aan te passen"
+                                  onChange={(e) => {
+                                    handleUpdateItem(item.id, { shortDescription: e.target.value });
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = e.target.scrollHeight + 'px';
+                                  }}
+                                  className="w-full text-[11px] text-slate-600 focus:text-slate-900 bg-transparent hover:bg-slate-100 focus:bg-white border border-transparent hover:border-slate-200 focus:border-[#7b68ee] focus:ring-1 focus:ring-[#7b68ee]/30 rounded px-1.5 py-0.5 transition-all outline-none resize-none leading-relaxed"
+                                />
+                              </div>
+
+                              {/* Detailed Scope Bullets (Editable) */}
+                              <div className="pt-1 space-y-1">
+                                {(item.detailedScope || []).map((scopePoint, scopeIdx) => (
+                                  <div key={scopeIdx} className="flex items-center gap-1.5 group/scope">
+                                    <span className="text-[11px] text-emerald-600 font-bold shrink-0">✓</span>
+                                    <input
+                                      type="text"
+                                      value={scopePoint}
+                                      placeholder="Specificatie / scope punt (bv. 5 pagina's, CMS, SEO...)"
+                                      title="Klik om dit scope-punt aan te passen"
+                                      onChange={(e) => {
+                                        const newScope = [...(item.detailedScope || [])];
+                                        newScope[scopeIdx] = e.target.value;
+                                        handleUpdateItem(item.id, { detailedScope: newScope });
+                                      }}
+                                      className="w-full text-[10.5px] text-slate-600 focus:text-slate-900 bg-transparent hover:bg-slate-100/70 focus:bg-white border border-transparent hover:border-slate-200 focus:border-[#7b68ee] focus:ring-1 focus:ring-[#7b68ee]/30 rounded px-1.5 py-0.5 outline-none transition-all"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newScope = (item.detailedScope || []).filter((_, idx) => idx !== scopeIdx);
+                                        handleUpdateItem(item.id, { detailedScope: newScope });
+                                      }}
+                                      className="text-slate-300 hover:text-red-500 p-0.5 rounded opacity-0 group-hover/scope:opacity-100 transition-opacity shrink-0 cursor-pointer"
+                                      title="Verwijder dit punt"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const currentScope = item.detailedScope || [];
+                                    handleUpdateItem(item.id, { detailedScope: [...currentScope, ''] });
+                                  }}
+                                  className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#7b68ee] hover:text-[#6a5ad6] hover:underline pt-0.5 cursor-pointer opacity-80 hover:opacity-100"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  <span>Scope-punt toevoegen (✓)</span>
+                                </button>
+                              </div>
                             </div>
                           </div>
 
@@ -415,7 +480,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
                 {isAddingServiceToCat === category.id && (
                   <div className="p-4 bg-slate-50 border-t border-slate-200 space-y-3 animate-in fade-in">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-white">
+                      <span className="text-xs font-semibold text-slate-900">
                         Dienst toevoegen aan {category.name}
                       </span>
                       <button
@@ -432,7 +497,14 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
                         placeholder="Dienstnaam..."
                         value={newServiceName}
                         onChange={(e) => setNewServiceName(e.target.value)}
-                        className="sm:col-span-6 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-xs text-[#1e293b] focus:outline-none focus:border-[#7b68ee]"
+                        className="sm:col-span-4 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-xs text-[#1e293b] focus:outline-none focus:border-[#7b68ee]"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Beschrijving van de dienst..."
+                        value={newServiceDesc}
+                        onChange={(e) => setNewServiceDesc(e.target.value)}
+                        className="sm:col-span-4 bg-white border border-slate-300 rounded-md px-3 py-1.5 text-xs text-[#1e293b] focus:outline-none focus:border-[#7b68ee]"
                       />
                       <input
                         type="number"
@@ -449,12 +521,14 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
                         <option value="one_off">Eenmalig</option>
                         <option value="monthly">Maandelijks</option>
                       </select>
-                      <button
-                        onClick={() => handleAddCustomService(category.id)}
-                        className="sm:col-span-2 py-1.5 bg-[#7b68ee] hover:bg-[#6a5ad6] text-white font-semibold text-xs rounded-md cursor-pointer"
-                      >
-                        Toevoegen
-                      </button>
+                      <div className="sm:col-span-12 flex justify-end">
+                        <button
+                          onClick={() => handleAddCustomService(category.id)}
+                          className="px-4 py-1.5 bg-[#7b68ee] hover:bg-[#6a5ad6] text-white font-semibold text-xs rounded-md cursor-pointer"
+                        >
+                          Dienst Toevoegen
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

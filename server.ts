@@ -319,34 +319,6 @@ app.get("/api/quotes/signed", async (req, res) => {
   const { data } = await supabaseAdmin.from('quotes').select('full_data').eq('status', 'akkoord').not('digital_signature', 'is', null);
   const signed = data ? data.map(d => d.full_data) : [];
   res.json({ success: true, quotes: signed });
-
-// In-memory quote & telemetry datastore
-interface ServerTelemetryEvent {
-  id: string;
-  timestamp: string;
-  action: string;
-  device: string;
-  location: string;
-  icon: string;
-  details?: string;
-  createdAtMs?: number;
-}
-
-interface ServerQuoteAnalytics {
-  totalViews: number;
-  uniqueDevices: number;
-  totalTimeMinutes: number;
-  firstViewedAt: string;
-  lastViewedAt: string;
-  lastDevice: string;
-  engagementScore: number;
-  sections: ServerSectionAnalytics[];
-  events: ServerTelemetryEvent[];
-  lastSessionStartMs?: Record<string, number>;
-}
-
-
-
 });
 
 // Sync quote to portal store so client web viewer can retrieve it
@@ -715,7 +687,7 @@ app.get("/api/teamleader/callback", async (req, res) => {
 
     const tokens = await response.json();
     if (tokens.access_token) {
-      let settings = {};
+      let settings: any = {};
       if (fs.existsSync(SETTINGS_FILE)) settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
       settings.teamleader_tokens = tokens;
       fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
@@ -729,11 +701,10 @@ app.get("/api/teamleader/callback", async (req, res) => {
   }
 });
 
-// Sync endpoint
-// --- Live Teamleader Fetch for Offertool ---
+// --- Live Teamleader Fetch for Offertool & CRM ---
 
-async function fetchTeamleader(url, options = {}) {
-  let settings = {};
+async function fetchTeamleader(url: string, options: any = {}) {
+  let settings: any = {};
   if (fs.existsSync(SETTINGS_FILE)) settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
   
   if (!settings.teamleader_tokens || !settings.teamleader_tokens.access_token) {
@@ -746,71 +717,113 @@ async function fetchTeamleader(url, options = {}) {
   });
 
   if (res.status === 401 && settings.teamleader_tokens.refresh_token) {
-    // Try refreshing
-    const refreshRes = await fetch("https://focus.teamleader.eu/oauth2/access_token", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        client_id: process.env.TEAMLEADER_CLIENT_ID,
-        client_secret: process.env.TEAMLEADER_CLIENT_SECRET,
-        refresh_token: settings.teamleader_tokens.refresh_token,
-        grant_type: "refresh_token"
-      })
-    });
-
-    if (refreshRes.ok) {
-      const newTokens = await refreshRes.json();
-      settings.teamleader_tokens = newTokens;
-      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
-
-      // Retry original request
-      res = await fetch(url, {
-        ...options,
-        headers: { ...options.headers, 'Authorization': `Bearer ${newTokens.access_token}` }
+    console.log("Teamleader token expired. Refreshing...");
+    try {
+      const refreshRes = await fetch("https://focus.teamleader.eu/oauth2/access_token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_id: process.env.TEAMLEADER_CLIENT_ID,
+          client_secret: process.env.TEAMLEADER_CLIENT_SECRET,
+          refresh_token: settings.teamleader_tokens.refresh_token,
+          grant_type: "refresh_token"
+        })
       });
+
+      if (refreshRes.ok) {
+        const newTokens = await refreshRes.json();
+        settings.teamleader_tokens = newTokens;
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+
+        // Retry original request with new access token
+        res = await fetch(url, {
+          ...options,
+          headers: { ...options.headers, 'Authorization': `Bearer ${newTokens.access_token}` }
+        });
+      }
+    } catch (refreshErr) {
+      console.error("Failed to refresh Teamleader token:", refreshErr);
     }
   }
 
   if (!res.ok) {
-    throw new Error("Teamleader API error: " + await res.text());
+    const errText = await res.text();
+    throw new Error(`Teamleader API error (${res.status}): ${errText}`);
   }
 
   return res.json();
 }
 
+async function fetchAllTeamleaderCompanies() {
+  let allCompanies: any[] = [];
+  let pageNumber = 1;
+  const pageSize = 100;
+  let hasMore = true;
+  const maxPages = 20; // Up to 2000 companies safety cap
+
+  while (hasMore && pageNumber <= maxPages) {
+    const data = await fetchTeamleader(`https://api.focus.teamleader.eu/companies.list?page[number]=${pageNumber}&page[size]=${pageSize}`);
+    if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+      allCompanies = allCompanies.concat(data.data);
+      if (data.data.length < pageSize) {
+        hasMore = false;
+      } else {
+        pageNumber++;
+      }
+    } else {
+      hasMore = false;
+    }
+  }
+  return allCompanies;
+}
+
+app.get("/api/teamleader/status", async (req, res) => {
+  try {
+    let settings: any = {};
+    if (fs.existsSync(SETTINGS_FILE)) settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
+    const isConfigured = !!(settings.teamleader_tokens && settings.teamleader_tokens.access_token);
+    res.json({
+      connected: isConfigured,
+      hasRefreshToken: !!settings.teamleader_tokens?.refresh_token
+    });
+  } catch (error: any) {
+    res.json({ connected: false, error: error.message });
+  }
+});
 
 app.get("/api/teamleader/contacts", async (req, res) => {
   try {
     const companyId = req.query.company_id;
-    let settings = {};
-    if (fs.existsSync(SETTINGS_FILE)) settings = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8'));
-    
-    const tlData = await fetchTeamleader(`https://api.focus.teamleader.eu/contacts.list?filter[company_id]=${companyId}`);
-    res.json({ success: true, data: tlData.data });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (!companyId) {
+      return res.json({ success: true, data: [] });
+    }
+    const tlData = await fetchTeamleader(`https://api.focus.teamleader.eu/contacts.list?filter[company_id]=${companyId}&page[size]=100`);
+    res.json({ success: true, data: tlData.data || [] });
+  } catch (error: any) {
+    console.error("Teamleader contacts fetch error:", error);
+    res.status(500).json({ error: error.message, data: [] });
   }
 });
 
 app.get("/api/teamleader/companies", async (req, res) => {
   try {
-    const tlData = await fetchTeamleader('https://api.focus.teamleader.eu/companies.list');
-    res.json({ success: true, data: tlData.data });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const companies = await fetchAllTeamleaderCompanies();
+    res.json({ success: true, count: companies.length, data: companies });
+  } catch (error: any) {
+    console.error("Teamleader companies fetch error:", error);
+    res.status(500).json({ error: error.message, data: [] });
   }
 });
 
 app.post("/api/sync/teamleader", async (req, res) => {
   try {
-    const tlData = await fetchTeamleader('https://api.focus.teamleader.eu/companies.list');
+    const companies = await fetchAllTeamleaderCompanies();
     
-    // Process tlData.data and push to Supabase...
-    // 3. Transform and insert into Supabase
-    const mappedClients = tlData.data.map((c: any) => ({
+    // Transform and insert into Supabase
+    const mappedClients = companies.map((c: any) => ({
       id: c.id,
       name: c.name,
-      industry: c.business_type || 'Onbekend',
+      industry: c.business_type || 'Klant',
       status: c.status === 'active' ? 'Actief' : 'Inactief',
       address: c.primary_address ? `${c.primary_address.line_1 || ''}, ${c.primary_address.postal_code || ''} ${c.primary_address.city || ''}`.trim() : ''
     }));
@@ -819,17 +832,22 @@ app.post("/api/sync/teamleader", async (req, res) => {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
     if (!supabaseUrl || !supabaseServiceKey) throw new Error("Supabase credentials missing in server config");
     
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAdminClient = createClient(supabaseUrl, supabaseServiceKey);
     
     // Upsert into Supabase
-    const { error: dbError } = await supabaseAdmin
+    const { error: dbError } = await supabaseAdminClient
       .from('clients')
       .upsert(mappedClients, { onConflict: 'id' });
       
     if (dbError) throw dbError;
 
-    res.json({ success: true, message: `${mappedClients.length} klanten gesynchroniseerd!`, count: mappedClients.length });
-  } catch (error) {
+    res.json({ 
+      success: true, 
+      message: `${mappedClients.length} bedrijven gesynchroniseerd vanuit Teamleader!`, 
+      count: mappedClients.length 
+    });
+  } catch (error: any) {
+    console.error("Teamleader sync error:", error);
     res.status(500).json({ error: error.message });
   }
 });

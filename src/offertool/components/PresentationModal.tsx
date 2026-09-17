@@ -316,11 +316,12 @@ export const PresentationModal: React.FC<PresentationModalProps> = ({
                       </div>
 
                       {item.detailedScope && item.detailedScope.length > 0 && (
-                        <div className="mt-2.5 pt-2 border-t border-slate-200 flex flex-wrap gap-1.5">
-                          {item.detailedScope.slice(0, 2).map((sc, i) => (
-                            <span key={i} className="text-[10px] text-[#1e293b] font-medium px-2 py-0.5 rounded bg-slate-50 border border-slate-200">
-                              ✓ {sc}
-                            </span>
+                        <div className="mt-2.5 pt-2 border-t border-slate-200 space-y-1">
+                          {item.detailedScope.filter(Boolean).map((sc, i) => (
+                            <div key={i} className="flex items-start gap-1.5 text-xs text-slate-700 leading-snug">
+                              <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
+                              <span>{sc}</span>
+                            </div>
                           ))}
                         </div>
                       )}

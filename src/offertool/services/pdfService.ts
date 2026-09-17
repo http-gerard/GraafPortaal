@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { QuoteData } from '../types';
+import { STUDIO_GRAAF_LOGO_BASE64, STUDIO_GRAAF_LOGO_RATIO } from '../assets/logoBase64';
 
 export const cleanCategoryName = (name?: string): string => {
   if (!name) return '';
@@ -21,7 +22,7 @@ export const generatePdfDocument = async (quote: QuoteData): Promise<void> => {
 
   // Design Tokens & Brand Colors
   const darkNavy = [24, 26, 32]; // slate-900 Studio Graaf Charcoal
-  const limeColor = [193, 237, 0]; // #7b68ee Studio Graaf Lime
+  const brandPurple = [123, 104, 238]; // #7b68ee Studio Graaf Brand Purple
   const slateDark = [30, 41, 59]; // #1E293B
   const slateBody = [51, 65, 85]; // #334155
   const slateMuted = [100, 116, 139]; // #64748B
@@ -31,29 +32,21 @@ export const generatePdfDocument = async (quote: QuoteData): Promise<void> => {
   // Running Header
   const renderHeader = (isFirstPage: boolean) => {
     // Top decorative brand bar
-    doc.setFillColor(193, 237, 0); // Lime #7b68ee
+    doc.setFillColor(123, 104, 238); // #7b68ee Studio Graaf
     doc.rect(0, 0, pageWidth, 3.5, 'F');
 
-    // Brand Logo & Monogram
-    doc.setFillColor(24, 26, 32); // Dark Navy badge
-    doc.roundedRect(margin, 9, 8.5, 8.5, 1.8, 1.8, 'F');
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(193, 237, 0); // Lime S
-    doc.text('S', margin + 2.8, 15.2);
-
-    // Studio Graaf Wordmark
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.setTextColor(24, 26, 32);
-    doc.text('studio graaf', margin + 11.5, 15.5);
-
-    // Subtitle
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(100, 116, 139);
-    doc.text('Digitaal bureau voor merk & web', margin + 11.5, 19);
+    // Official Studio Graaf Logo (same as website)
+    try {
+      const logoHeight = 8;
+      const logoWidth = logoHeight * STUDIO_GRAAF_LOGO_RATIO;
+      doc.addImage(STUDIO_GRAAF_LOGO_BASE64, 'PNG', margin, 9, logoWidth, logoHeight);
+    } catch (e) {
+      console.warn('Could not add Studio Graaf logo to PDF:', e);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(24, 26, 32);
+      doc.text('studio graaf', margin, 15.5);
+    }
 
     // Right-aligned official company meta
     doc.setFont('helvetica', 'bold');
@@ -205,13 +198,21 @@ export const generatePdfDocument = async (quote: QuoteData): Promise<void> => {
       const lineTotal = itemPrice * itemQty;
       const typeLabel = item.billingType === 'monthly' ? '/ mnd' : 'eenmalig';
 
-      const scopeText = item.detailedScope && item.detailedScope.length > 0
-        ? `\n• ${item.detailedScope.slice(0, 2).join('  • ')}`
+      const formattedScope = item.detailedScope && item.detailedScope.length > 0
+        ? item.detailedScope
+            .filter((s: string) => s && s.trim())
+            .map((s: string) => `• ${s.trim()}`)
+            .join('\n')
         : '';
+
+      const desc = (item.shortDescription || '').trim();
+      const scopeContent = desc && formattedScope
+        ? `${desc}\n\n${formattedScope}`
+        : (desc || formattedScope);
 
       tableData.push([
         item.billingType === 'monthly' ? `${item.name}\n(Maandelijkse Service)` : item.name,
-        `${item.shortDescription || ''}${scopeText}`,
+        scopeContent,
         `${itemQty} ${item.unit || 'stuk'}`,
         `€ ${itemPrice.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}`,
         `€ ${lineTotal.toLocaleString('nl-NL', { minimumFractionDigits: 2 })} ${typeLabel}`
@@ -388,27 +389,19 @@ export const generatePdfDocument = async (quote: QuoteData): Promise<void> => {
 
       // Category Card Box
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(margin, currentY, pageWidth - (margin * 2), 6.5, 1.2, 1.2, 'F');
+      doc.roundedRect(margin, currentY, pageWidth - (margin * 2), 6.8, 1.2, 1.2, 'F');
 
       // Category color pip
-      doc.setFillColor(193, 237, 0);
-      doc.circle(margin + 4, currentY + 3.25, 1.5, 'F');
+      doc.setFillColor(123, 104, 238); // Brand Purple #7b68ee
+      doc.circle(margin + 4, currentY + 3.4, 1.5, 'F');
 
-      // Category Title (NO NUMBERS)
+      // Category Title (Clean & Single Line)
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
       doc.setTextColor(24, 26, 32);
-      doc.text(cleanName, margin + 8, currentY + 4.4);
+      doc.text(cleanName, margin + 8, currentY + 4.6);
 
-      if (cat.badge) {
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        doc.setTextColor(100, 116, 139);
-        const titleWidth = doc.getTextWidth(cleanName);
-        doc.text(`•  ${cat.badge}`, margin + 10 + titleWidth, currentY + 4.4);
-      }
-
-      currentY += 9;
+      currentY += 9.5;
 
       // Description text
       if (cat.valueProposition?.description) {
@@ -420,17 +413,19 @@ export const generatePdfDocument = async (quote: QuoteData): Promise<void> => {
         currentY += (splitDesc.length * 3.8) + 2;
       }
 
-      // Business Impact Bullets
+      // Business Impact Bullets with clean vector checkmarks
       if (cat.valueProposition?.businessImpacts && cat.valueProposition.businessImpacts.length > 0) {
         cat.valueProposition.businessImpacts.slice(0, 3).forEach((impact) => {
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7.5);
-          doc.setTextColor(16, 185, 129); // Emerald checkmark
-          doc.text('✓', margin + 3.5, currentY);
+          // Draw crisp emerald vector checkmark
+          doc.setDrawColor(16, 185, 129); // Emerald
+          doc.setLineWidth(0.4);
+          doc.line(margin + 3.5, currentY - 0.8, margin + 4.5, currentY + 0.2);
+          doc.line(margin + 4.5, currentY + 0.2, margin + 6.2, currentY - 1.8);
 
           doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
           doc.setTextColor(71, 85, 105);
-          doc.text(impact, margin + 7.5, currentY);
+          doc.text(impact, margin + 8, currentY);
           currentY += 3.8;
         });
       }

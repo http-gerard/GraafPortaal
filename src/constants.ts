@@ -197,7 +197,7 @@ export const MEETINGS: Meeting[] = [
     clientId: 'CLI-001',
     location: 'Google Meet',
     notes: 'Doelen besproken. Startdatum vastgelegd op 15 nov.',
-    attachments: ['briefing_v1.pdf'],
+    attachments: [{ name: 'briefing_v1.pdf', url: '#' }],
     status: 'Gepland'
   },
   {
@@ -221,7 +221,10 @@ export const MEETINGS: Meeting[] = [
     clientId: 'CLI-001',
     location: 'Microsoft Teams',
     notes: 'Klant was zeer tevreden over het homepage design. Aanpassingen gevraagd voor de contactpagina.',
-    attachments: ['design_feedback.docx', 'presentation.pdf'],
+    attachments: [
+      { name: 'design_feedback.docx', url: '#' },
+      { name: 'presentation.pdf', url: '#' }
+    ],
     status: 'Voltooid'
   }
 ];

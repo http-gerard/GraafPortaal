@@ -33,6 +33,13 @@ export const CatalogManager: React.FC<CatalogManagerProps> = ({
     onUpdateQuote({ ...quote, categories: updated });
   };
 
+  const handleUpdateItemInCatalog = (itemId: string, updates: Partial<ServiceItem>) => {
+    const updatedItems = quote.items.map(item =>
+      item.id === itemId ? { ...item, ...updates } : item
+    );
+    onUpdateQuote({ ...quote, items: updatedItems });
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto px-4 py-8 space-y-6">
       
@@ -40,11 +47,11 @@ export const CatalogManager: React.FC<CatalogManagerProps> = ({
       <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-white" />
-            <h3 className="text-base font-semibold text-white">Catalogus & Meerwaarde Beheer</h3>
+            <Sparkles className="w-5 h-5 text-[#7b68ee]" />
+            <h3 className="text-base font-semibold text-slate-900">Catalogus & Meerwaarde Beheer</h3>
           </div>
           <p className="text-xs text-slate-500 mt-0.5 font-medium">
-            Beheer de strategische waarde-uitleg en standaardprijzen van de Studio Graaf dienstencatalogus.
+            Beheer de strategische waarde-uitleg, beschrijvingen en standaardprijzen van de Studio Graaf dienstencatalogus.
           </p>
         </div>
 
@@ -68,11 +75,11 @@ export const CatalogManager: React.FC<CatalogManagerProps> = ({
           >
             <div 
               className="w-2.5 h-2.5 rounded-full" 
-              style={{ backgroundColor: selectedCatId === cat.id ? '#7b68ee' : (cat.color || 'slate-900') }} 
+              style={{ backgroundColor: selectedCatId === cat.id ? '#7b68ee' : (cat.color || '#7b68ee') }} 
             />
             <span>{cat.name}</span>
             <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
-              selectedCatId === cat.id ? 'bg-[#1e293b] text-[#7b68ee] border-[#3F444D]' : 'bg-slate-50 text-slate-500 border-slate-200'
+              selectedCatId === cat.id ? 'bg-[#7b68ee]/20 text-[#7b68ee] border-[#7b68ee]/30' : 'bg-slate-50 text-slate-500 border-slate-200'
             }`}>
               {quote.items.filter(i => i.categoryId === cat.id).length}
             </span>
@@ -85,8 +92,8 @@ export const CatalogManager: React.FC<CatalogManagerProps> = ({
         <div className="space-y-6">
           {/* Explainer / Value Proposition Editor */}
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-white flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
+            <h4 className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#7b68ee]" />
               Strategische Meerwaarde Uitleg voor {selectedCategory.name}
             </h4>
             <CategoryValueExplainer
@@ -97,30 +104,48 @@ export const CatalogManager: React.FC<CatalogManagerProps> = ({
 
           {/* Services list in this category */}
           <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-4 shadow-xs">
-            <h4 className="text-sm font-semibold text-white flex items-center gap-2">
-              <Layers className="w-4 h-4 text-white" />
-              Standaard Diensten in deze Categorie ({itemsInCat.length})
+            <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-[#7b68ee]" />
+              Standaard Diensten & Modules in deze Categorie ({itemsInCat.length})
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {itemsInCat.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-slate-50 p-4 rounded-md border border-slate-200 flex flex-col justify-between space-y-3"
+                  className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between space-y-3"
                 >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <h5 className="text-sm font-semibold text-white">{item.name}</h5>
-                      <span className="text-xs font-mono font-semibold text-white bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">
-                        € {(Number(item.price) || 0).toLocaleString('nl-NL')}
-                      </span>
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => handleUpdateItemInCatalog(item.id, { name: e.target.value })}
+                        className="text-sm font-bold text-slate-900 bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-[#7b68ee] rounded px-1.5 py-0.5 outline-none flex-1 transition-all"
+                        placeholder="Dienstnaam..."
+                      />
+                      <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-xs shrink-0">
+                        <span className="text-xs text-slate-500 font-bold">€</span>
+                        <input
+                          type="number"
+                          value={item.price}
+                          onChange={(e) => handleUpdateItemInCatalog(item.id, { price: parseFloat(e.target.value) || 0 })}
+                          className="w-16 text-right text-xs font-mono font-bold text-slate-900 bg-transparent outline-none"
+                        />
+                      </div>
                     </div>
 
-                    <p className="text-xs text-slate-500 leading-relaxed">{item.shortDescription}</p>
+                    <textarea
+                      rows={2}
+                      value={item.shortDescription || ''}
+                      onChange={(e) => handleUpdateItemInCatalog(item.id, { shortDescription: e.target.value })}
+                      placeholder="Beschrijving van de dienst of module..."
+                      className="w-full text-xs text-slate-600 focus:text-slate-900 bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-[#7b68ee] rounded p-1.5 outline-none transition-all resize-none leading-relaxed"
+                    />
                   </div>
 
                   <div className="pt-2.5 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-                    <span className="font-mono font-bold text-white">{item.code || 'CODE'}</span>
+                    <span className="font-mono font-bold text-slate-700">{item.code || 'CODE'}</span>
                     <span className="font-semibold">{item.billingType === 'monthly' ? 'Maandelijks (SLA)' : 'Eenmalig'}</span>
                   </div>
                 </div>

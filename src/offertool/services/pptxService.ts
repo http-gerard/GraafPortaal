@@ -1,5 +1,6 @@
 import pptxgen from 'pptxgenjs';
 import { QuoteData } from '../types';
+import { STUDIO_GRAAF_LOGO_BASE64 } from '../assets/logoBase64';
 
 export const cleanCategoryName = (name?: string): string => {
   if (!name) return '';
@@ -139,47 +140,15 @@ export const generatePowerPointPresentation = async (quote: QuoteData): Promise<
     line: { color: LIME_ACCENT }
   });
 
-  // Logo Monogram Badge [S]
-  slide1.addShape(pptx.ShapeType.roundRect, {
+  // Official Studio Graaf Logo (same as website)
+  const logoWidth = 2.4;
+  const logoHeight = logoWidth / (1000 / 162);
+  slide1.addImage({
+    data: STUDIO_GRAAF_LOGO_BASE64,
     x: 0.8,
     y: 0.5,
-    w: 0.48,
-    h: 0.48,
-    rectRadius: 0.08,
-    fill: { color: BG_DARK_NAVY },
-    line: { color: BG_DARK_NAVY }
-  });
-
-  slide1.addText('S', {
-    x: 0.8,
-    y: 0.52,
-    w: 0.48,
-    h: 0.44,
-    fontSize: 14,
-    bold: true,
-    color: LIME_ACCENT,
-    align: 'center'
-  });
-
-  // Wordmark "studio graaf"
-  slide1.addText('studio graaf', {
-    x: 1.4,
-    y: 0.48,
-    w: 4.0,
-    h: 0.32,
-    fontSize: 15,
-    bold: true,
-    color: TEXT_DARK,
-    fontFace: 'Arial'
-  });
-
-  slide1.addText('Digitaal bureau voor merk & web', {
-    x: 1.4,
-    y: 0.78,
-    w: 4.0,
-    h: 0.22,
-    fontSize: 8.5,
-    color: TEXT_MUTED
+    w: logoWidth,
+    h: logoHeight
   });
 
   // Quote number pill on the right
@@ -964,26 +933,15 @@ export const generatePowerPointPresentation = async (quote: QuoteData): Promise<
     line: { color: LIME_ACCENT }
   });
 
-  // Large Monogram Badge
-  closingSlide.addShape(pptx.ShapeType.roundRect, {
-    x: 6.26,
-    y: 1.1,
-    w: 0.8,
-    h: 0.8,
-    rectRadius: 0.15,
-    fill: { color: BG_DARK_NAVY },
-    line: { color: BG_DARK_NAVY }
-  });
-
-  closingSlide.addText('S', {
-    x: 6.26,
+  // Official Studio Graaf Logo (same as website)
+  const closingLogoW = 3.2;
+  const closingLogoH = closingLogoW / (1000 / 162);
+  closingSlide.addImage({
+    data: STUDIO_GRAAF_LOGO_BASE64,
+    x: (13.333 - closingLogoW) / 2,
     y: 1.15,
-    w: 0.8,
-    h: 0.7,
-    fontSize: 22,
-    bold: true,
-    color: LIME_ACCENT,
-    align: 'center'
+    w: closingLogoW,
+    h: closingLogoH
   });
 
   // Next Step Pill

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { UserPlus, Search, Filter, PlusCircle, Link as LinkIcon, Copy, Check } from 'lucide-react';
+import { UserPlus, Search, Filter, PlusCircle, Link as LinkIcon, Copy, Check, RefreshCw, Building2 } from 'lucide-react';
 import { Card, Badge, Button } from './UI';
 import { useDatabase } from '../contexts/DatabaseContext';
 import { supabase } from '../lib/supabase';
@@ -17,7 +17,28 @@ export const Clients = ({ onViewClient }: ClientsProps) => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [selectedClient, setSelectedClient] = React.useState<Client | null>(null);
   const [copyingId, setCopyingId] = React.useState<string | null>(null);
-    const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [isSyncing, setIsSyncing] = React.useState(false);
+  const [syncToast, setSyncToast] = React.useState<string | null>(null);
+
+  const handleSyncTeamleader = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/sync/teamleader', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setSyncToast(data.message || 'Teamleader gesynchroniseerd!');
+        await refreshData();
+      } else {
+        setSyncToast('Fout bij syncen: ' + (data.error || 'Onbekende fout'));
+      }
+    } catch (e: any) {
+      setSyncToast('Fout: ' + e.message);
+    } finally {
+      setIsSyncing(false);
+      setTimeout(() => setSyncToast(null), 5000);
+    }
+  };
   
   const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -103,6 +124,21 @@ export const Clients = ({ onViewClient }: ClientsProps) => {
 
   return (
     <div className="space-y-6">
+      {syncToast && (
+        <div className="p-4 rounded-xl bg-[#7b68ee]/10 border border-[#7b68ee]/20 flex items-center justify-between animate-in fade-in duration-300">
+          <div className="flex items-center gap-2.5">
+            <Building2 className="w-5 h-5 text-[#7b68ee]" />
+            <span className="text-xs font-bold text-slate-800">{syncToast}</span>
+          </div>
+          <button 
+            onClick={() => setSyncToast(null)}
+            className="text-xs font-bold text-slate-400 hover:text-slate-700"
+          >
+            Sluiten
+          </button>
+        </div>
+      )}
+
       <header className="flex justify-between items-start">
         <div className="flex flex-col gap-2">
           <span className="text-[#7b68ee] font-bold tracking-[0.2em] text-[10px]">Strategische Samenwerkings Hub</span>
@@ -110,6 +146,15 @@ export const Clients = ({ onViewClient }: ClientsProps) => {
           <p className="text-slate-500 max-w-2xl text-sm leading-relaxed font-medium">Beheer actieve partnerschappen, manage verwachtingen en volg groeimetrieken in real-time.</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button 
+            variant="secondary"
+            onClick={handleSyncTeamleader}
+            disabled={isSyncing}
+            className="gap-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm"
+          >
+            <RefreshCw size={16} className={`text-[#7b68ee] ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Teamleader Syncen...' : 'Sync Teamleader'}</span>
+          </Button>
           <Button onClick={handleOpenAdd} className="gap-3 shadow-xl">
             <PlusCircle size={20} />
             Nieuwe Klant

@@ -9,7 +9,11 @@ import {
   Smartphone,
   ChevronRight,
   Check,
-  Users
+  Users,
+  Building2,
+  RefreshCw,
+  ExternalLink,
+  CheckCircle2
 } from 'lucide-react';
 import { Card, Button } from './UI';
 import { cn } from '../lib/utils';
@@ -44,8 +48,12 @@ export const Settings = ({ viewMode = 'agency' }: { viewMode?: 'agency' | 'clien
   };
 
   const [templates, setTemplates] = React.useState(defaultTemplates);
-  
   const [activeEmailTab, setActiveEmailTab] = React.useState('quote_invite');
+  
+  // Teamleader Integration State
+  const [tlStatus, setTlStatus] = React.useState<{ connected: boolean; count?: number }>({ connected: false });
+  const [tlSyncing, setTlSyncing] = React.useState(false);
+  const [tlSyncMsg, setTlSyncMsg] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -68,7 +76,39 @@ export const Settings = ({ viewMode = 'agency' }: { viewMode?: 'agency' | 'clien
         if (data.settings?.graaf_email_templates) setTemplates(data.settings.graaf_email_templates);
       })
       .catch(console.error);
+
+    // Check Teamleader status and count
+    fetch('/api/teamleader/companies')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.data)) {
+          setTlStatus({ connected: true, count: data.data.length });
+        } else {
+          setTlStatus({ connected: false });
+        }
+      })
+      .catch(() => setTlStatus({ connected: false }));
   }, []);
+
+  const handleSyncTeamleaderToDb = async () => {
+    setTlSyncing(true);
+    setTlSyncMsg(null);
+    try {
+      const res = await fetch('/api/sync/teamleader', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        setTlSyncMsg(data.message || 'Succesvol gesynchroniseerd!');
+        setTlStatus({ connected: true, count: data.count });
+      } else {
+        setTlSyncMsg('Fout: ' + (data.error || 'Onbekend'));
+      }
+    } catch (e: any) {
+      setTlSyncMsg('Fout: ' + e.message);
+    } finally {
+      setTlSyncing(false);
+      setTimeout(() => setTlSyncMsg(null), 5000);
+    }
+  };
 
   
   const updateTemplate = (key: string, field: 'subject' | 'body', value: string) => {
@@ -214,6 +254,7 @@ export const Settings = ({ viewMode = 'agency' }: { viewMode?: 'agency' | 'clien
             </Card>
             
             {viewMode === 'agency' && (
+            <>
             <Card className="p-8 mt-6">
               <h2 className="text-xl font-bold text-slate-900 mb-6">Microsoft Outlook Koppeling</h2>
               <div className="space-y-4">
@@ -232,6 +273,63 @@ export const Settings = ({ viewMode = 'agency' }: { viewMode?: 'agency' | 'clien
                 </div>
               </div>
             </Card>
+
+            <Card className="p-8 mt-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#7b68ee]/10 flex items-center justify-center text-[#7b68ee]">
+                    <Building2 size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">Teamleader Focus CRM Koppeling</h2>
+                    <p className="text-xs text-slate-500 font-medium">Synchroniseer klanten, contactpersonen en bedrijven automatisch met uw offertes.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {tlStatus.connected ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Gekoppeld ({tlStatus.count || 0} bedrijven)
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      Niet gekoppeld
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {tlSyncMsg && (
+                <div className="mb-4 p-3 rounded-xl bg-[#7b68ee]/10 border border-[#7b68ee]/20 text-xs font-bold text-slate-800 flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-[#7b68ee]" />
+                  <span>{tlSyncMsg}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button
+                  variant="secondary"
+                  onClick={handleSyncTeamleaderToDb}
+                  disabled={tlSyncing}
+                  className="gap-2 text-xs font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                >
+                  <RefreshCw size={14} className={`text-[#7b68ee] ${tlSyncing ? 'animate-spin' : ''}`} />
+                  {tlSyncing ? 'Synchroniseren...' : 'Synchroniseer Alle Bedrijven Nu'}
+                </Button>
+
+                <a
+                  href="/api/teamleader/auth"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-[#7b68ee] hover:bg-[#7b68ee]/10 border border-[#7b68ee]/20 transition-all"
+                >
+                  <span>{tlStatus.connected ? 'Opnieuw Verifiëren / Inloggen' : 'Koppel Teamleader Focus'}</span>
+                  <ExternalLink size={14} />
+                </a>
+              </div>
+            </Card>
+            </>
           )}
             </>
           )}
