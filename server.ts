@@ -661,7 +661,8 @@ app.get("/api/teamleader/auth", (req, res) => {
   const TEAMLEADER_CLIENT_ID = process.env.TEAMLEADER_CLIENT_ID;
   if (!TEAMLEADER_CLIENT_ID) return res.send("Ontbrekende TEAMLEADER_CLIENT_ID in .env");
   // Change to your production URL when deploying
-  const redirectUri = "http://localhost:3000/api/teamleader/callback";
+  const baseUrl = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || 'http://localhost:3000';
+  const redirectUri = `${baseUrl}/api/teamleader/callback`;
   const url = `https://focus.teamleader.eu/oauth2/authorize?client_id=${TEAMLEADER_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}`;
   res.redirect(url);
 });
@@ -670,7 +671,8 @@ app.get("/api/teamleader/callback", async (req, res) => {
   const code = req.query.code;
   const TEAMLEADER_CLIENT_ID = process.env.TEAMLEADER_CLIENT_ID;
   const TEAMLEADER_CLIENT_SECRET = process.env.TEAMLEADER_CLIENT_SECRET;
-  const redirectUri = "http://localhost:3000/api/teamleader/callback";
+  const baseUrl = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || 'http://localhost:3000';
+  const redirectUri = `${baseUrl}/api/teamleader/callback`;
 
   try {
     const response = await fetch("https://focus.teamleader.eu/oauth2/access_token", {

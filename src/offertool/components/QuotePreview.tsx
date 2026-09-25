@@ -220,7 +220,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-900 text-white">
+                <tr className="border-b-2 border-slate-900 text-slate-900">
                   <th className="py-3 px-3 font-semibold">Dienst / Onderdeel</th>
                   <th className="py-3 px-3 font-semibold">Omschrijving & Scope</th>
                   <th className="py-3 px-3 font-semibold text-center">Aantal</th>
@@ -264,7 +264,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                                 <div className="space-y-1">
                                   {item.detailedScope.filter(Boolean).map((sc, si) => (
                                     <div key={si} className="flex items-start gap-1.5 text-[11px] text-slate-700 leading-snug">
-                                      <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
+                                      <Check className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />
                                       <span>{sc}</span>
                                     </div>
                                   ))}
@@ -308,7 +308,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
 
             {monthlySubtotal > 0 && (
               <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1.5">
-                <span className="font-semibold text-white block text-[11px]">
+                <span className="font-semibold text-slate-900 block text-[11px]">
                   Maandelijks Hosting & Onderhoudscontract:
                 </span>
                 <p className="text-[#1e293b] leading-relaxed font-medium">
@@ -440,7 +440,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                 <p className="text-slate-500 leading-relaxed">{phase.description}</p>
                 <div className="pt-2 border-t border-slate-200 space-y-1">
                   {phase.deliverables.map((d, i) => (
-                    <p key={i} className="text-[11px] text-[#1e293b] font-medium">✓ {d}</p>
+                    <p key={i} className="text-[11px] text-[#1e293b] font-medium flex items-center gap-1.5"><Check className="w-3 h-3 text-emerald-600 shrink-0" /> <span>{d}</span></p>
                   ))}
                 </div>
               </div>
@@ -518,7 +518,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                         />
                       </div>
                     ) : (
-                      <div className="h-14 bg-white px-4 rounded-md border border-emerald-200 flex items-center font-serif italic text-lg text-white">
+                      <div className="h-14 bg-white px-4 rounded-md border border-emerald-200 flex items-center font-serif italic text-lg text-slate-900">
                         {quote.digitalSignature.signedBy}
                       </div>
                     )}

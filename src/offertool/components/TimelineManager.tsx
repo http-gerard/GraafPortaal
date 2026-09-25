@@ -11,6 +11,59 @@ export const TimelineManager: React.FC<TimelineManagerProps> = ({
   quote,
   onUpdateQuote
 }) => {
+  
+  const handleAutoGenerate = () => {
+    const categories = quote.categories || [];
+    let newPhases: TimelinePhase[] = [];
+    
+    if (categories.length > 1 || categories.length === 0) {
+      // 4 empty phases
+      newPhases = Array.from({ length: 4 }).map((_, i) => ({
+        id: `phase-${Date.now()}-${i}`,
+        phaseNumber: i + 1,
+        title: `Fase ${i + 1}`,
+        duration: '',
+        description: '',
+        deliverables: []
+      }));
+    } else {
+      const catName = categories[0].name.toLowerCase();
+      if (catName.includes('website') || catName.includes('web')) {
+        newPhases = [
+          { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Discovery & Design', duration: 'Week 1 - 2', description: 'Onderzoek, wireframing en het opmaken van het visuele design.', deliverables: ['Sitemap', 'Wireframes', 'Design Mockups'] },
+          { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Development', duration: 'Week 3 - 5', description: 'Programmeren van de website en koppelen van CMS.', deliverables: ['Testlink', 'CMS Oplevering'] },
+          { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Testing & Content', duration: 'Week 6', description: 'Vullen van de website en uitvoerig testen op mobiel/desktop.', deliverables: ['Ingevulde pagina's', 'QA Rapport'] },
+          { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Go-Live & Opleiding', duration: 'Week 7', description: 'Lancering van de website en training voor het beheer.', deliverables: ['Live Website', 'Opleiding'] },
+        ];
+      } else if (catName.includes('marketing')) {
+        newPhases = [
+          { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Strategie & Onderzoek', duration: 'Week 1 - 2', description: 'Analyse van de doelgroep en opzet van de marketingstrategie.', deliverables: ['Strategiedocument', 'Kanaalkeuze'] },
+          { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Setup & Creatie', duration: 'Week 3 - 4', description: 'Aanmaken van accounts en ontwerpen van advertenties.', deliverables: ['Ad Creatives', 'Campagne Setup'] },
+          { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Lancering', duration: 'Week 5', description: 'Live zetten van de eerste campagnes.', deliverables: ['Live Campagnes'] },
+          { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Optimalisatie', duration: 'Doorlopend', description: 'Monitoren en bijsturen van de campagnes voor maximaal resultaat.', deliverables: ['Maandelijkse Rapportage'] },
+        ];
+      } else if (catName.includes('branding')) {
+        newPhases = [
+          { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Brand Discovery', duration: 'Week 1 - 2', description: 'Workshops en bepalen van de merkidentiteit.', deliverables: ['Brand Strategie'] },
+          { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Concept Creatie', duration: 'Week 3 - 4', description: 'Ontwerpen van logo en visuele stijl.', deliverables: ['Logo Concepten', 'Kleurpalet'] },
+          { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Uitwerking', duration: 'Week 5 - 6', description: 'Uitwerken van huisstijl over alle dragers.', deliverables: ['Brandbook', 'Visitekaartjes'] },
+          { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Oplevering', duration: 'Week 7', description: 'Overdracht van alle bronbestanden.', deliverables: ['Source Files'] },
+        ];
+      } else {
+        newPhases = Array.from({ length: 4 }).map((_, i) => ({
+          id: `phase-${Date.now()}-${i}`,
+          phaseNumber: i + 1,
+          title: `Fase ${i + 1}`,
+          duration: '',
+          description: '',
+          deliverables: []
+        }));
+      }
+    }
+    
+    onUpdateQuote({ ...quote, timelinePhases: newPhases });
+  };
+
   const handleUpdatePhase = (phaseId: string, updates: Partial<TimelinePhase>) => {
     const updated = quote.timelinePhases.map(p =>
       p.id === phaseId ? { ...p, ...updates } : p
@@ -49,21 +102,32 @@ export const TimelineManager: React.FC<TimelineManagerProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-lg border border-slate-200 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-white" />
-            <h3 className="text-base font-semibold text-white">Project Tijdlijn & Fasering</h3>
+            <Clock className="w-5 h-5 text-slate-900" />
+            <h3 className="text-base font-semibold text-slate-900">Project Tijdlijn & Fasering</h3>
           </div>
           <p className="text-xs text-slate-500 mt-0.5 font-medium">
             Definieer de doorlooptijd, mijlpalen en concrete deliverables voor de offerte en presentatie.
           </p>
         </div>
 
-        <button
-          onClick={handleAddPhase}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold bg-[#7b68ee] text-white hover:bg-[#6a5ad6] shadow-xs transition-colors cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Fase Toevoegen</span>
-        </button>
+        
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleAutoGenerate}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Standaard Tijdlijn</span>
+          </button>
+          <button
+            onClick={handleAddPhase}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold bg-[#7b68ee] text-white hover:bg-[#6a5ad6] shadow-xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Fase Toevoegen</span>
+          </button>
+        </div>
+
       </div>
 
       {/* Phases Grid */}
@@ -121,7 +185,7 @@ export const TimelineManager: React.FC<TimelineManagerProps> = ({
             </div>
 
             <div className="pt-3 border-t border-slate-200 space-y-2">
-              <label className="block text-[10px] font-semibold text-white">Deliverables (komma-gescheiden):</label>
+              <label className="block text-[10px] font-semibold text-slate-700">Deliverables (komma-gescheiden):</label>
               <input
                 type="text"
                 value={phase.deliverables.join(', ')}

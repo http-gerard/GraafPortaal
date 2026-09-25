@@ -107,9 +107,11 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
   const selectedItems = (quote.items || []).filter(i => i.selected);
   const oneOffItems = selectedItems.filter(i => i.billingType === 'one_off');
   const monthlyItems = selectedItems.filter(i => i.billingType === 'monthly');
+  const yearlyItems = selectedItems.filter(i => i.billingType === 'yearly');
 
   const oneOffSubtotal = oneOffItems.reduce((acc, curr) => acc + ((Number(curr.price) || 0) * (Number(curr.quantity) || 1)), 0);
   const monthlySubtotal = monthlyItems.reduce((acc, curr) => acc + ((Number(curr.price) || 0) * (Number(curr.quantity) || 1)), 0);
+  const yearlySubtotal = yearlyItems.reduce((acc, curr) => acc + ((Number(curr.price) || 0) * (Number(curr.quantity) || 1)), 0);
 
   const discountVal = Number(quote.overallDiscountValue) || 0;
   const discountAmount = quote.overallDiscountType === 'percentage'
@@ -233,6 +235,9 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
             const catTotalMonthly = selectedCatItems
               .filter(i => i.billingType === 'monthly')
               .reduce((acc, curr) => acc + ((Number(curr.price) || 0) * (Number(curr.quantity) || 1)), 0);
+            const catTotalYearly = selectedCatItems
+              .filter(i => i.billingType === 'yearly')
+              .reduce((acc, curr) => acc + ((Number(curr.price) || 0) * (Number(curr.quantity) || 1)), 0);
 
             const isExplainerOpen = explainerOpenCategoryId === category.id;
 
@@ -352,10 +357,15 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
                                     item.selected ? 'text-[#1e293b]' : 'text-slate-500'
                                   }`}
                                 />
-                                {item.billingType === 'monthly' && (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
-                                    Maandelijks
-                                  </span>
+                                {(item.billingType === 'monthly' || item.billingType === 'yearly') && (
+                                  <select
+                                    value={item.billingType}
+                                    onChange={(e) => handleUpdateItemField(item.id, 'billingType', e.target.value as any)}
+                                    className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 shrink-0 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer appearance-none"
+                                  >
+                                    <option value="monthly">Maandelijks</option>
+                                    <option value="yearly">Jaarlijks</option>
+                                  </select>
                                 )}
                                 {item.isCustom && (
                                   <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-800 border border-blue-200 shrink-0">
@@ -624,13 +634,28 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
             </div>
 
             {/* Monthly Retainer */}
-            {monthlySubtotal > 0 && (
+            
+            {/* Yearly Retainer */}
+            {yearlySubtotal > 0 && (
               <div className="p-3 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
                 <div>
-                  <span className="text-[10px] text-white font-semibold block">
+                  <span className="text-[10px] text-slate-500 font-semibold block">
+                    Jaarlijkse Service (SLA/Licenties)
+                  </span>
+                  <span className="text-sm font-semibold text-[#1e293b] font-mono">
+                    € {(Number(yearlySubtotal) || 0).toLocaleString('nl-NL', { minimumFractionDigits: 2 })} / jaar
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500 font-bold">excl. BTW</span>
+              </div>
+            )}
+{monthlySubtotal > 0 && (
+              <div className="p-3 rounded-md bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-500 font-semibold block">
                     Maandelijkse Service (SLA)
                   </span>
-                  <span className="text-sm font-semibold text-white font-mono">
+                  <span className="text-sm font-semibold text-[#1e293b] font-mono">
                     € {(Number(monthlySubtotal) || 0).toLocaleString('nl-NL', { minimumFractionDigits: 2 })} / mnd
                   </span>
                 </div>

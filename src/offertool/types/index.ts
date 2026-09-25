@@ -1,4 +1,4 @@
-export type BillingType = 'one_off' | 'monthly' | 'hourly';
+export type BillingType = 'one_off' | 'monthly' | 'yearly' | 'hourly';
 
 export interface ServiceItem {
   id: string;
@@ -145,7 +145,14 @@ export interface QuoteData {
   overallDiscountValue: number;
   vatRate: number; // e.g. 21 for 21%
   paymentTerms: string;
+  
   timelinePhases: TimelinePhase[];
+  customTexts?: {
+    introduction?: string;
+    approach?: string;
+    aboutUs?: string;
+  };
+
   customIntroMessage?: string;
   generalTermsAccepted?: boolean;
   digitalSignature?: DigitalSignature;

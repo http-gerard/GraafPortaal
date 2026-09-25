@@ -219,6 +219,7 @@ export const ClientQuotePortal: React.FC<ClientQuotePortalProps> = ({
   const selectedItems = quote.items.filter((i) => i.selected);
   const oneOffItems = selectedItems.filter((i) => i.billingType === 'one_off');
   const monthlyItems = selectedItems.filter((i) => i.billingType === 'monthly');
+  const yearlyItems = selectedItems.filter((i) => i.billingType === 'yearly');
 
   const subtotalOneOff = oneOffItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
   const discountOneOff = quote.overallDiscountType === 'percentage' 
@@ -229,6 +230,7 @@ export const ClientQuotePortal: React.FC<ClientQuotePortalProps> = ({
   const totalOneOffInclVat = totalOneOffExclVat + vatAmountOneOff;
 
   const totalMonthlyExclVat = monthlyItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
+  const totalYearlyExclVat = yearlyItems.reduce((acc, i) => acc + i.price * i.quantity, 0);
 
   const handleDownloadPdf = async () => {
     setIsExportingPdf(true);
@@ -745,7 +747,7 @@ export const ClientQuotePortal: React.FC<ClientQuotePortalProps> = ({
                   type="checkbox"
                   checked={termsAccepted}
                   onChange={(e) => setTermsAccepted(e.target.checked)}
-                  className="mt-0.5 rounded text-white focus:ring-0"
+                  className="mt-0.5 rounded text-[#7b68ee] focus:ring-0"
                 />
                 <span className="text-[11px] text-slate-500 leading-snug">
                   Ik verklaar bevoegd te zijn om namens <strong>{quote.client.companyName}</strong> akkoord te gaan met dit offertevoorstel en de betalingsvoorwaarden van Studio Graaf.
