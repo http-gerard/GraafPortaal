@@ -32,7 +32,7 @@ export const TimelineManager: React.FC<TimelineManagerProps> = ({
         newPhases = [
           { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Discovery & Design', duration: 'Week 1 - 2', description: 'Onderzoek, wireframing en het opmaken van het visuele design.', deliverables: ['Sitemap', 'Wireframes', 'Design Mockups'] },
           { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Development', duration: 'Week 3 - 5', description: 'Programmeren van de website en koppelen van CMS.', deliverables: ['Testlink', 'CMS Oplevering'] },
-          { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Testing & Content', duration: 'Week 6', description: 'Vullen van de website en uitvoerig testen op mobiel/desktop.', deliverables: ['Ingevulde pagina's', 'QA Rapport'] },
+          { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Testing & Content', duration: 'Week 6', description: 'Vullen van de website en uitvoerig testen op mobiel/desktop.', deliverables: ["Ingevulde pagina's", 'QA Rapport'] },
           { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Go-Live & Opleiding', duration: 'Week 7', description: 'Lancering van de website en training voor het beheer.', deliverables: ['Live Website', 'Opleiding'] },
         ];
       } else if (catName.includes('marketing')) {
