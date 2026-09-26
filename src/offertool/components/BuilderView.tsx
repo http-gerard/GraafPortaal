@@ -360,7 +360,13 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
                                 {(item.billingType === 'monthly' || item.billingType === 'yearly') && (
                                   <select
                                     value={item.billingType}
-                                    onChange={(e) => handleUpdateItemField(item.id, 'billingType', e.target.value as any)}
+                                    onChange={(e) => {
+                                      const newBillingType = e.target.value as any;
+                                      let newUnit = item.unit;
+                                      if (newBillingType === 'yearly' && (newUnit === 'mnd' || newUnit === 'maand')) newUnit = 'jr';
+                                      if (newBillingType === 'monthly' && (newUnit === 'jr' || newUnit === 'jaar')) newUnit = 'mnd';
+                                      handleUpdateItem(item.id, { billingType: newBillingType, unit: newUnit });
+                                    }}
                                     className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 shrink-0 focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer appearance-none"
                                   >
                                     <option value="monthly">Maandelijks</option>
@@ -447,7 +453,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
                                 onChange={(e) => handleUpdateItem(item.id, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
                                 className="w-9 text-center bg-white border border-slate-300 rounded text-xs font-bold text-[#1e293b] focus:outline-none focus:border-[#7b68ee]"
                               />
-                              <span className="text-[10px] text-slate-500 ml-1 font-medium">{item.unit}</span>
+                              <span className="text-[10px] text-slate-500 ml-1 font-medium">{item.billingType === 'yearly' && (item.unit === 'mnd' || item.unit === 'maand') ? 'jr' : item.billingType === 'monthly' && (item.unit === 'jr' || item.unit === 'jaar') ? 'mnd' : item.unit}</span>
                             </div>
 
                             {/* Unit Price */}

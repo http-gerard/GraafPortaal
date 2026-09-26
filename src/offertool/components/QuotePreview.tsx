@@ -275,7 +275,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                               )}
                             </td>
                             <td className="py-3 px-3 text-center text-[#1e293b] align-top font-bold">
-                              {itemQty} {item.unit || 'project'}
+                              {itemQty} {item.billingType === 'yearly' && (item.unit === 'mnd' || item.unit === 'maand') ? 'jr' : item.billingType === 'monthly' && (item.unit === 'jr' || item.unit === 'jaar') ? 'mnd' : item.unit || 'project'}
                             </td>
                             <td className="py-3 px-3 text-right text-slate-500 align-top font-mono font-medium">
                               € {itemPrice.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}

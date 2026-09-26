@@ -13,7 +13,9 @@ import {
   Building2,
   RefreshCw,
   ExternalLink,
-  CheckCircle2
+  CheckCircle2,
+  Layers,
+  Trash2
 } from 'lucide-react';
 import { Card, Button } from './UI';
 import { cn } from '../lib/utils';
@@ -26,6 +28,7 @@ const SETTINGS_TABS = [
   { id: 'notifications', label: 'Meldingen', icon: Bell },
   { id: 'security', label: 'Beveiliging', icon: Lock },
   { id: 'emails', label: 'E-mail Sjablonen', icon: Mail },
+  { id: 'timelines', label: 'Tijdlijn Sjablonen', icon: Layers },
 ];
 
 export const Settings = ({ viewMode = 'agency' }: { viewMode?: 'agency' | 'client' }) => {
@@ -49,6 +52,31 @@ export const Settings = ({ viewMode = 'agency' }: { viewMode?: 'agency' | 'clien
 
   const [templates, setTemplates] = React.useState(defaultTemplates);
   const [activeEmailTab, setActiveEmailTab] = React.useState('quote_invite');
+
+  // Timeline Templates State
+  const defaultTimelineTemplates = {
+    website: [
+      { id: "p-web-1", phaseNumber: 1, title: 'Discovery & Design', duration: 'Week 1 - 2', description: 'Onderzoek, wireframing en het opmaken van het visuele design.', deliverables: ['Sitemap', 'Wireframes', 'Design Mockups'] },
+      { id: "p-web-2", phaseNumber: 2, title: 'Development', duration: 'Week 3 - 5', description: 'Programmeren van de website en koppelen van CMS.', deliverables: ['Testlink', 'CMS Oplevering'] },
+      { id: "p-web-3", phaseNumber: 3, title: 'Testing & Content', duration: 'Week 6', description: 'Vullen van de website en uitvoerig testen op mobiel/desktop.', deliverables: ['Ingevulde pagina\'s', 'QA Rapport'] },
+      { id: "p-web-4", phaseNumber: 4, title: 'Go-Live & Opleiding', duration: 'Week 7', description: 'Lancering van de website en training voor het beheer.', deliverables: ['Live Website', 'Opleiding'] },
+    ],
+    marketing: [
+      { id: "p-mark-1", phaseNumber: 1, title: 'Strategie & Onderzoek', duration: 'Week 1 - 2', description: 'Analyse van de doelgroep en opzet van de marketingstrategie.', deliverables: ['Strategiedocument', 'Kanaalkeuze'] },
+      { id: "p-mark-2", phaseNumber: 2, title: 'Setup & Creatie', duration: 'Week 3 - 4', description: 'Aanmaken van accounts en ontwerpen van advertenties.', deliverables: ['Ad Creatives', 'Campagne Setup'] },
+      { id: "p-mark-3", phaseNumber: 3, title: 'Lancering', duration: 'Week 5', description: 'Live zetten van de eerste campagnes.', deliverables: ['Live Campagnes'] },
+      { id: "p-mark-4", phaseNumber: 4, title: 'Optimalisatie', duration: 'Doorlopend', description: 'Monitoren en bijsturen van de campagnes voor maximaal resultaat.', deliverables: ['Maandelijkse Rapportage'] },
+    ],
+    branding: [
+      { id: "p-brand-1", phaseNumber: 1, title: 'Brand Discovery', duration: 'Week 1 - 2', description: 'Workshops en bepalen van de merkidentiteit.', deliverables: ['Brand Strategie'] },
+      { id: "p-brand-2", phaseNumber: 2, title: 'Concept Creatie', duration: 'Week 3 - 4', description: 'Ontwerpen van logo en visuele stijl.', deliverables: ['Logo Concepten', 'Kleurpalet'] },
+      { id: "p-brand-3", phaseNumber: 3, title: 'Uitwerking', duration: 'Week 5 - 6', description: 'Uitwerken van huisstijl over alle dragers.', deliverables: ['Brandbook', 'Visitekaartjes'] },
+      { id: "p-brand-4", phaseNumber: 4, title: 'Oplevering', duration: 'Week 7', description: 'Overdracht van alle bronbestanden.', deliverables: ['Source Files'] },
+    ]
+  };
+  const [timelineTemplates, setTimelineTemplates] = React.useState(defaultTimelineTemplates);
+  const [activeTimelineTab, setActiveTimelineTab] = React.useState('website');
+
   
   // Teamleader Integration State
   const [tlStatus, setTlStatus] = React.useState<{ connected: boolean; count?: number }>({ connected: false });
@@ -74,6 +102,7 @@ export const Settings = ({ viewMode = 'agency' }: { viewMode?: 'agency' | 'clien
       .then(data => {
         if (data.settings?.outlook_ics_url) setIcsUrl(data.settings.outlook_ics_url);
         if (data.settings?.graaf_email_templates) setTemplates(data.settings.graaf_email_templates);
+        if (data.settings?.graaf_timeline_templates) setTimelineTemplates(data.settings.graaf_timeline_templates);
       })
       .catch(console.error);
 
@@ -148,7 +177,11 @@ export const Settings = ({ viewMode = 'agency' }: { viewMode?: 'agency' | 'clien
       await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outlook_ics_url: icsUrl, graaf_email_templates: templates })
+        body: JSON.stringify({ 
+          outlook_ics_url: icsUrl, 
+          graaf_email_templates: templates,
+          graaf_timeline_templates: timelineTemplates
+        })
       });
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
@@ -399,7 +432,127 @@ export const Settings = ({ viewMode = 'agency' }: { viewMode?: 'agency' | 'clien
             </Card>
           )}
 
-                            {activeTab === 'emails' && (
+                            
+          {activeTab === 'timelines' && (
+            <Card className="p-0 overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+              
+              {/* Left sidebar: List of templates */}
+              <div className="w-full md:w-1/3 bg-slate-50 border-r border-slate-100 flex flex-col">
+                <div className="p-4 border-b border-slate-100">
+                  <h2 className="text-sm font-bold text-slate-900">Tijdlijn Sjablonen</h2>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                  {[
+                    { id: 'website', label: 'Website Project' },
+                    { id: 'marketing', label: 'Marketing Traject' },
+                    { id: 'branding', label: 'Branding & Identiteit' }
+                  ].map(t => (
+                    <button key={t.id} onClick={() => setActiveTimelineTab(t.id)} className={`w-full text-left px-3 py-2.5 rounded-lg text-xs font-bold transition-all ${activeTimelineTab === t.id ? 'bg-[#7b68ee] text-white shadow-md' : 'text-slate-600 hover:bg-slate-200/50'}`}>
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right side: Editor */}
+              <div className="flex-1 p-8 bg-white flex flex-col overflow-y-auto">
+                <div className="p-4 rounded-xl bg-[#7b68ee]/5 border border-[#7b68ee]/20 mb-6 flex justify-between items-center">
+                  <p className="text-[10px] text-slate-600 font-medium leading-relaxed">
+                    Pas hier de standaard fases, looptijden en deliverables aan.
+                  </p>
+                  <button 
+                    onClick={() => {
+                      const newPhases = [...(timelineTemplates[activeTimelineTab as keyof typeof timelineTemplates] || [])];
+                      newPhases.push({ id: `p-${Date.now()}`, phaseNumber: newPhases.length + 1, title: 'Nieuwe Fase', duration: '', description: '', deliverables: [] });
+                      setTimelineTemplates(prev => ({ ...prev, [activeTimelineTab]: newPhases }));
+                    }}
+                    className="px-3 py-1.5 bg-slate-900 text-white rounded text-[10px] font-bold hover:bg-slate-800 transition-colors"
+                  >
+                    + Fase Toevoegen
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {(timelineTemplates[activeTimelineTab as keyof typeof timelineTemplates] || []).map((phase, index) => (
+                    <div key={phase.id} className="p-4 bg-slate-50 border border-slate-200 rounded-lg relative group">
+                      <button 
+                        onClick={() => {
+                          const newPhases = (timelineTemplates[activeTimelineTab as keyof typeof timelineTemplates] || []).filter((_, i) => i !== index);
+                          setTimelineTemplates(prev => ({ ...prev, [activeTimelineTab]: newPhases.map((p, i) => ({ ...p, phaseNumber: i + 1 })) }));
+                        }}
+                        className="absolute top-2 right-2 p-1.5 bg-white text-rose-500 rounded-md border border-slate-200 opacity-0 group-hover:opacity-100 hover:bg-rose-50 transition-all"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="w-6 h-6 rounded bg-[#7b68ee]/10 text-[#7b68ee] flex items-center justify-center font-bold text-[11px]">{index + 1}</span>
+                        <input 
+                          type="text" 
+                          value={phase.title} 
+                          onChange={(e) => {
+                            const newPhases = [...timelineTemplates[activeTimelineTab as keyof typeof timelineTemplates]];
+                            newPhases[index].title = e.target.value;
+                            setTimelineTemplates(prev => ({ ...prev, [activeTimelineTab]: newPhases }));
+                          }}
+                          className="flex-1 p-2 rounded-md bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:ring-1 focus:ring-[#7b68ee] outline-none" 
+                          placeholder="Fase titel (bijv. Discovery & Design)"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3 ml-8">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400">Doorlooptijd</label>
+                          <input 
+                            type="text" 
+                            value={phase.duration} 
+                            onChange={(e) => {
+                              const newPhases = [...timelineTemplates[activeTimelineTab as keyof typeof timelineTemplates]];
+                              newPhases[index].duration = e.target.value;
+                              setTimelineTemplates(prev => ({ ...prev, [activeTimelineTab]: newPhases }));
+                            }}
+                            className="w-full p-2 rounded-md bg-white border border-slate-200 text-xs text-slate-800 focus:ring-1 focus:ring-[#7b68ee] outline-none" 
+                            placeholder="bijv. Week 1 - 2"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400">Omschrijving</label>
+                          <textarea 
+                            value={phase.description} 
+                            onChange={(e) => {
+                              const newPhases = [...timelineTemplates[activeTimelineTab as keyof typeof timelineTemplates]];
+                              newPhases[index].description = e.target.value;
+                              setTimelineTemplates(prev => ({ ...prev, [activeTimelineTab]: newPhases }));
+                            }}
+                            className="w-full p-2 rounded-md bg-white border border-slate-200 text-xs text-slate-800 focus:ring-1 focus:ring-[#7b68ee] outline-none resize-y" 
+                            rows={2}
+                          ></textarea>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400">Deliverables (komma gescheiden)</label>
+                          <input 
+                            type="text" 
+                            value={phase.deliverables.join(', ')} 
+                            onChange={(e) => {
+                              const newPhases = [...timelineTemplates[activeTimelineTab as keyof typeof timelineTemplates]];
+                              newPhases[index].deliverables = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                              setTimelineTemplates(prev => ({ ...prev, [activeTimelineTab]: newPhases }));
+                            }}
+                            className="w-full p-2 rounded-md bg-white border border-slate-200 text-xs text-slate-800 focus:ring-1 focus:ring-[#7b68ee] outline-none" 
+                            placeholder="Sitemap, Wireframes, ..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </Card>
+          )}
+
+          {activeTab === 'emails' && (
             <Card className="p-0 overflow-hidden flex flex-col md:flex-row min-h-[600px]">
               
               {/* Left sidebar: List of templates */}

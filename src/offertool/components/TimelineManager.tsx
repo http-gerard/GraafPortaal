@@ -12,12 +12,28 @@ export const TimelineManager: React.FC<TimelineManagerProps> = ({
   onUpdateQuote
 }) => {
   
-  const handleAutoGenerate = () => {
-    const categories = quote.categories || [];
+
+  const [savedTemplates, setSavedTemplates] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.settings?.graaf_timeline_templates) {
+          setSavedTemplates(data.settings.graaf_timeline_templates);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+  const handleApplyTemplate = (e: React.ChangeEvent<HTMLSelectElement>) => {
+
+    const templateType = e.target.value;
+    if (!templateType) return; // 'kiezen...' option
+
     let newPhases: TimelinePhase[] = [];
     
-    if (categories.length > 1 || categories.length === 0) {
-      // 4 empty phases
+if (templateType === 'empty') {
       newPhases = Array.from({ length: 4 }).map((_, i) => ({
         id: `phase-${Date.now()}-${i}`,
         phaseNumber: i + 1,
@@ -26,42 +42,45 @@ export const TimelineManager: React.FC<TimelineManagerProps> = ({
         description: '',
         deliverables: []
       }));
-    } else {
-      const catName = categories[0].name.toLowerCase();
-      if (catName.includes('website') || catName.includes('web')) {
-        newPhases = [
-          { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Discovery & Design', duration: 'Week 1 - 2', description: 'Onderzoek, wireframing en het opmaken van het visuele design.', deliverables: ['Sitemap', 'Wireframes', 'Design Mockups'] },
-          { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Development', duration: 'Week 3 - 5', description: 'Programmeren van de website en koppelen van CMS.', deliverables: ['Testlink', 'CMS Oplevering'] },
-          { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Testing & Content', duration: 'Week 6', description: 'Vullen van de website en uitvoerig testen op mobiel/desktop.', deliverables: ["Ingevulde pagina's", 'QA Rapport'] },
-          { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Go-Live & Opleiding', duration: 'Week 7', description: 'Lancering van de website en training voor het beheer.', deliverables: ['Live Website', 'Opleiding'] },
-        ];
-      } else if (catName.includes('marketing')) {
-        newPhases = [
-          { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Strategie & Onderzoek', duration: 'Week 1 - 2', description: 'Analyse van de doelgroep en opzet van de marketingstrategie.', deliverables: ['Strategiedocument', 'Kanaalkeuze'] },
-          { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Setup & Creatie', duration: 'Week 3 - 4', description: 'Aanmaken van accounts en ontwerpen van advertenties.', deliverables: ['Ad Creatives', 'Campagne Setup'] },
-          { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Lancering', duration: 'Week 5', description: 'Live zetten van de eerste campagnes.', deliverables: ['Live Campagnes'] },
-          { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Optimalisatie', duration: 'Doorlopend', description: 'Monitoren en bijsturen van de campagnes voor maximaal resultaat.', deliverables: ['Maandelijkse Rapportage'] },
-        ];
-      } else if (catName.includes('branding')) {
-        newPhases = [
-          { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Brand Discovery', duration: 'Week 1 - 2', description: 'Workshops en bepalen van de merkidentiteit.', deliverables: ['Brand Strategie'] },
-          { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Concept Creatie', duration: 'Week 3 - 4', description: 'Ontwerpen van logo en visuele stijl.', deliverables: ['Logo Concepten', 'Kleurpalet'] },
-          { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Uitwerking', duration: 'Week 5 - 6', description: 'Uitwerken van huisstijl over alle dragers.', deliverables: ['Brandbook', 'Visitekaartjes'] },
-          { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Oplevering', duration: 'Week 7', description: 'Overdracht van alle bronbestanden.', deliverables: ['Source Files'] },
-        ];
-      } else {
-        newPhases = Array.from({ length: 4 }).map((_, i) => ({
-          id: `phase-${Date.now()}-${i}`,
-          phaseNumber: i + 1,
-          title: `Fase ${i + 1}`,
-          duration: '',
-          description: '',
-          deliverables: []
-        }));
-      }
+    } else if (savedTemplates && savedTemplates[templateType]) {
+      // Use dynamically loaded templates from settings
+      newPhases = savedTemplates[templateType].map((p: any) => ({ ...p, id: `p-${Date.now()}-${Math.random()}` }));
+    } else if (templateType === 'website') {
+      newPhases = [
+        { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Discovery & Design', duration: 'Week 1 - 2', description: 'Onderzoek, wireframing en het opmaken van het visuele design.', deliverables: ['Sitemap', 'Wireframes', 'Design Mockups'] },
+        { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Development', duration: 'Week 3 - 5', description: 'Programmeren van de website en koppelen van CMS.', deliverables: ['Testlink', 'CMS Oplevering'] },
+        { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Testing & Content', duration: 'Week 6', description: 'Vullen van de website en uitvoerig testen op mobiel/desktop.', deliverables: ['Ingevulde pagina\'s', 'QA Rapport'] },
+        { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Go-Live & Opleiding', duration: 'Week 7', description: 'Lancering van de website en training voor het beheer.', deliverables: ['Live Website', 'Opleiding'] },
+      ];
+    } else if (templateType === 'marketing') {
+      newPhases = [
+        { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Strategie & Onderzoek', duration: 'Week 1 - 2', description: 'Analyse van de doelgroep en opzet van de marketingstrategie.', deliverables: ['Strategiedocument', 'Kanaalkeuze'] },
+        { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Setup & Creatie', duration: 'Week 3 - 4', description: 'Aanmaken van accounts en ontwerpen van advertenties.', deliverables: ['Ad Creatives', 'Campagne Setup'] },
+        { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Lancering', duration: 'Week 5', description: 'Live zetten van de eerste campagnes.', deliverables: ['Live Campagnes'] },
+        { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Optimalisatie', duration: 'Doorlopend', description: 'Monitoren en bijsturen van de campagnes voor maximaal resultaat.', deliverables: ['Maandelijkse Rapportage'] },
+      ];
+    } else if (templateType === 'branding') {
+      newPhases = [
+        { id: `p-${Date.now()}-1`, phaseNumber: 1, title: 'Brand Discovery', duration: 'Week 1 - 2', description: 'Workshops en bepalen van de merkidentiteit.', deliverables: ['Brand Strategie'] },
+        { id: `p-${Date.now()}-2`, phaseNumber: 2, title: 'Concept Creatie', duration: 'Week 3 - 4', description: 'Ontwerpen van logo en visuele stijl.', deliverables: ['Logo Concepten', 'Kleurpalet'] },
+        { id: `p-${Date.now()}-3`, phaseNumber: 3, title: 'Uitwerking', duration: 'Week 5 - 6', description: 'Uitwerken van huisstijl over alle dragers.', deliverables: ['Brandbook', 'Visitekaartjes'] },
+        { id: `p-${Date.now()}-4`, phaseNumber: 4, title: 'Oplevering', duration: 'Week 7', description: 'Overdracht van alle bronbestanden.', deliverables: ['Source Files'] },
+      ];
+    } else if (templateType === 'empty') {
+      newPhases = Array.from({ length: 4 }).map((_, i) => ({
+        id: `phase-${Date.now()}-${i}`,
+        phaseNumber: i + 1,
+        title: `Fase ${i + 1}`,
+        duration: '',
+        description: '',
+        deliverables: []
+      }));
     }
     
     onUpdateQuote({ ...quote, timelinePhases: newPhases });
+    
+    // Reset dropdown
+    e.target.value = '';
   };
 
   const handleUpdatePhase = (phaseId: string, updates: Partial<TimelinePhase>) => {
@@ -112,13 +131,20 @@ export const TimelineManager: React.FC<TimelineManagerProps> = ({
 
         
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleAutoGenerate}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer"
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Standaard Tijdlijn</span>
-          </button>
+          <div className="relative">
+            <Layers className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <select
+              onChange={handleApplyTemplate}
+              defaultValue=""
+              className="pl-8 pr-8 py-2 rounded-md text-xs font-semibold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#7b68ee]/20 focus:border-[#7b68ee] transition-all cursor-pointer appearance-none"
+            >
+              <option value="" disabled>Laad Tijdlijn Template...</option>
+              <option value="website">Website Project</option>
+              <option value="marketing">Marketing Traject</option>
+              <option value="branding">Branding & Identiteit</option>
+              <option value="empty">4 Lege Stappen</option>
+            </select>
+          </div>
           <button
             onClick={handleAddPhase}
             className="flex items-center gap-1.5 px-4 py-2 rounded-md text-xs font-semibold bg-[#7b68ee] text-white hover:bg-[#6a5ad6] shadow-xs transition-colors cursor-pointer"
