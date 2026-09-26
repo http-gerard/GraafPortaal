@@ -516,7 +516,7 @@ export const ClientQuotePortal: React.FC<ClientQuotePortalProps> = ({
                       Inbegrepen in deze scope:
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                      {item.detailedScope.map((scope, idx) => (
+                      {(item.detailedScope || []).map((scope, idx) => (
                         <div key={idx} className="flex items-center gap-1.5 text-[#1e293b]">
                           <Check className="w-3 h-3 text-emerald-600 shrink-0" />
                           <span>{scope}</span>
@@ -601,7 +601,7 @@ export const ClientQuotePortal: React.FC<ClientQuotePortalProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {quote.timelinePhases.map((phase) => (
+            {(quote.timelinePhases || []).map((phase) => (
               <div key={phase.id} className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-slate-900">Fase {phase.phaseNumber}: {phase.title}</span>

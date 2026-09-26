@@ -39,7 +39,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
   isExportingPptx
 }) => {
   // Active categories
-  const activeCategories = quote.categories.filter(cat =>
+  const activeCategories = (quote.categories || []).filter(cat =>
     quote.items.some(item => item.categoryId === cat.id && item.selected)
   );
 
@@ -47,9 +47,11 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
   const selectedItems = (quote.items || []).filter(i => i.selected);
   const oneOffItems = selectedItems.filter(i => i.billingType === 'one_off');
   const monthlyItems = selectedItems.filter(i => i.billingType === 'monthly');
+  const yearlyItems = selectedItems.filter(i => i.billingType === 'yearly');
 
   const oneOffSubtotal = oneOffItems.reduce((acc, curr) => acc + ((curr.price || 0) * (curr.quantity || 1)), 0);
   const monthlySubtotal = monthlyItems.reduce((acc, curr) => acc + ((curr.price || 0) * (curr.quantity || 1)), 0);
+  const yearlySubtotal = yearlyItems.reduce((acc, curr) => acc + ((curr.price || 0) * (curr.quantity || 1)), 0);
 
   const discountVal = quote.overallDiscountValue || 0;
   const discountAmount = quote.overallDiscountType === 'percentage'
@@ -279,7 +281,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                             </td>
                             <td className="py-3 px-3 text-right font-semibold text-[#1e293b] align-top font-mono">
                               € {lineTotal.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
-                              {item.billingType === 'monthly' ? ' / mnd' : ''}
+                              {item.billingType === 'monthly' ? ' / mnd' : item.billingType === 'yearly' ? ' / jr' : ''}
                             </td>
                           </tr>
                         );
@@ -306,7 +308,18 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
               </p>
             </div>
 
-            {monthlySubtotal > 0 && (
+            
+            {yearlySubtotal > 0 && (
+              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                <span className="font-semibold text-slate-900 block text-[11px]">
+                  Jaarlijkse Service (SLA / Licenties):
+                </span>
+                <p className="text-[#1e293b] leading-relaxed font-medium">
+                  Het jaarlijkse bedrag van <strong>€ {yearlySubtotal.toFixed(2)} excl. BTW</strong> start na oplevering.
+                </p>
+              </div>
+            )}
+{monthlySubtotal > 0 && (
               <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1.5">
                 <span className="font-semibold text-slate-900 block text-[11px]">
                   Maandelijks Hosting & Onderhoudscontract:
@@ -362,7 +375,18 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                 </span>
               </div>
 
-              {monthlySubtotal > 0 && (
+              
+            {yearlySubtotal > 0 && (
+              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                <span className="font-semibold text-slate-900 block text-[11px]">
+                  Jaarlijkse Service (SLA / Licenties):
+                </span>
+                <p className="text-[#1e293b] leading-relaxed font-medium">
+                  Het jaarlijkse bedrag van <strong>€ {yearlySubtotal.toFixed(2)} excl. BTW</strong> start na oplevering.
+                </p>
+              </div>
+            )}
+{monthlySubtotal > 0 && (
                 <div className="pt-3 border-t border-slate-700 flex justify-between items-center text-[#7b68ee]">
                   <span className="text-xs font-bold text-white">Doorlopend / Maand:</span>
                   <span className="text-sm font-semibold font-mono">
@@ -400,11 +424,11 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                 </div>
 
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  {cat.valueProposition.description}
+                  {(cat.valueProposition?.description || "")}
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200 text-xs">
-                  {cat.valueProposition.businessImpacts.map((impact, i) => (
+                  {(cat.valueProposition?.businessImpacts || []).map((impact, i) => (
                     <div key={i} className="flex items-start gap-1.5 text-[#1e293b]">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                       <span className="font-medium">{impact}</span>
@@ -428,7 +452,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quote.timelinePhases.map((phase) => (
+            {(quote.timelinePhases || []).map((phase) => (
               <div key={phase.id} className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-[#1e293b] bg-white border border-slate-200 px-2 py-0.5 rounded">
@@ -439,7 +463,7 @@ export const QuotePreview: React.FC<QuotePreviewProps> = ({
                 <h5 className="font-semibold text-[#1e293b]">{phase.title}</h5>
                 <p className="text-slate-500 leading-relaxed">{phase.description}</p>
                 <div className="pt-2 border-t border-slate-200 space-y-1">
-                  {phase.deliverables.map((d, i) => (
+                  {(phase.deliverables || []).map((d, i) => (
                     <p key={i} className="text-[11px] text-[#1e293b] font-medium flex items-center gap-1.5"><Check className="w-3 h-3 text-emerald-600 shrink-0" /> <span>{d}</span></p>
                   ))}
                 </div>
