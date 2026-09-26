@@ -4,7 +4,8 @@ import { BrandLogo } from './BrandLogo';
 import { 
   FileDown, 
   Presentation, 
-  CheckCircle2, 
+  CheckCircle2,
+  Check, 
   ShieldCheck, 
   Receipt, 
   Activity, 
